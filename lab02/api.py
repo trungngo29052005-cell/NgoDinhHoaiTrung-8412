@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from cipher.caesar import CaesarCipher
 from cipher.vigenere import VigenereCipher
 from cipher.railfence import RailFenceCipher
+from cipher.playfair import PlayFairCipher
+from cipher.transposition import TranspositionCipher
 
 app = Flask(__name__)
 
@@ -51,12 +53,12 @@ def vigenere_decrypt():
 
 
 # ==============================================================================
-# RAILFENCE CIPHER ALGORITHM (Đã chuyển lên trên hàm main)
+# RAILFENCE CIPHER ALGORITHM
 # ==============================================================================
 railfence_cipher = RailFenceCipher()
 
 @app.route('/api/railfence/encrypt', methods=['POST'])
-def railfence_encrypt():  # Đã đổi tên hàm tránh trùng lặp
+def railfence_encrypt():
     data = request.json
     plain_text = data['plain_text']
     key = int(data['key'])
@@ -64,7 +66,7 @@ def railfence_encrypt():  # Đã đổi tên hàm tránh trùng lặp
     return jsonify({'encrypted_text': encrypted_text})
 
 @app.route('/api/railfence/decrypt', methods=['POST'])
-def railfence_decrypt():  # Đã đổi tên hàm tránh trùng lặp
+def railfence_decrypt():
     data = request.json
     cipher_text = data['cipher_text']
     key = int(data['key'])
@@ -73,7 +75,60 @@ def railfence_decrypt():  # Đã đổi tên hàm tránh trùng lặp
 
 
 # ==============================================================================
-# MAIN FUNCTION (Luôn luôn để ở cuối cùng của file)
+# PLAYFAIR CIPHER ALGORITHM
+# ==============================================================================
+playfair_cipher = PlayFairCipher()
+
+@app.route('/api/playfair/creatematrix', methods=['POST'])
+def playfair_creatematrix():
+    data = request.json
+    key = data['key']
+    playfair_matrix = playfair_cipher.create_playfair_matrix(key)
+    return jsonify({'playfair_matrix': playfair_matrix})
+
+@app.route('/api/playfair/encrypt', methods=['POST'])
+def playfair_encrypt():
+    data = request.json
+    plain_text = data['plain_text']
+    key = data['key']
+    playfair_matrix = playfair_cipher.create_playfair_matrix(key)
+    encrypted_text = playfair_cipher.playfair_encrypt(plain_text, playfair_matrix)
+    return jsonify({'encrypted_text': encrypted_text})
+
+@app.route('/api/playfair/decrypt', methods=['POST'])
+def playfair_decrypt():
+    data = request.json
+    cipher_text = data['cipher_text']
+    key = data['key']
+    playfair_matrix = playfair_cipher.create_playfair_matrix(key)
+    decrypted_text = playfair_cipher.playfair_decrypt(cipher_text, playfair_matrix)
+    return jsonify({'decrypted_text': decrypted_text})
+
+
+# ==============================================================================
+# TRANSPOSITION CIPHER ALGORITHM
+# ==============================================================================
+transposition_cipher = TranspositionCipher()
+
+@app.route('/api/transposition/encrypt', methods=['POST'])
+def transposition_encrypt():
+    data = request.get_json()
+    plain_text = data.get('plain_text')
+    key = int(data.get('key'))
+    encrypted_text = transposition_cipher.encrypt(plain_text, key)
+    return jsonify({'encrypted_text': encrypted_text})
+
+@app.route('/api/transposition/decrypt', methods=['POST'])
+def transposition_decrypt():
+    data = request.get_json()
+    cipher_text = data.get('cipher_text')
+    key = int(data.get('key'))
+    decrypted_text = transposition_cipher.decrypt(cipher_text, key)  # Đã đổi tên biến cho chuẩn nghĩa
+    return jsonify({'decrypted_text': decrypted_text})
+
+
+# ==============================================================================
+# MAIN FUNCTION (Luôn luôn nằm ở cuối cùng của file)
 # ==============================================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
