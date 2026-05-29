@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Rail Fence Cipher</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container mt-5">
+
+    <table class="table table-bordered">
+
+        <!-- TITLE -->
+        <tr>
+
+            <td style="text-align:center;
+                       font-size:30px;
+                       font-weight:bold;">
+
+                RAIL FENCE CIPHER
+
+            </td>
+
+        </tr>
+
+        <!-- ENCRYPTION -->
+        <tr>
+
+            <td style="color:blue;
+                       font-weight:bold;">
+
+                ENCRYPTION
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+
+                <form method="POST"
+                      action="/railfence_encrypt">
+
+                    <!-- Plain Text -->
+                    <div class="form-group">
+
+                        <label>
+                            Plain Text
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               name="inputPlainText"
+                               placeholder="Enter Plain Text"
+                               required>
+
+                    </div>
+
+                    <!-- Key -->
+                    <div class="form-group">
+
+                        <label>
+                            Number of Rails
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               name="inputKeyPlain"
+                               placeholder="Enter Number of Rails"
+                               required>
+
+                    </div>
+
+                    <!-- Button -->
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        Encrypt
+
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+        <!-- DECRYPTION -->
+        <tr>
+
+            <td style="color:green;
+                       font-weight:bold;">
+
+                DECRYPTION
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+
+                <form method="POST"
+                      action="/railfence_decrypt">
+
+                    <!-- Cipher Text -->
+                    <div class="form-group">
+
+                        <label>
+                            Cipher Text
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               name="inputCipherText"
+                               placeholder="Enter Cipher Text"
+                               required>
+
+                    </div>
+
+                    <!-- Key -->
+                    <div class="form-group">
+
+                        <label>
+                            Number of Rails
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               name="inputKeyCipher"
+                               placeholder="Enter Number of Rails"
+                               required>
+
+                    </div>
+
+                    <!-- Button -->
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        Decrypt
+
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+    </table>
+
+</div>
+
+</body>
+
+</html>
