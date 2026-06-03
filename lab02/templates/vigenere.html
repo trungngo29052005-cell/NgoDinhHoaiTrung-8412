@@ -130,5 +130,28 @@
 
 </div>
 
+<script>
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const action = this.getAttribute('action');
+        fetch(action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            let resultDiv = this.querySelector('.result-container');
+            if (!resultDiv) {
+                resultDiv = document.createElement('div');
+                resultDiv.className = 'result-container alert alert-info mt-3';
+                this.appendChild(resultDiv);
+            }
+            resultDiv.innerHTML = html;
+        });
+    });
+});
+</script>
 </body>
 </html>

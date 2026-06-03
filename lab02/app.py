@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from cipher.caesar import CaesarCipher
 from cipher.vigenere import VigenereCipher
 from cipher.railfence import RailFenceCipher
+from cipher.playfair import PlayFairCipher
+from cipher.transposition import TranspositionCipher
 
 app = Flask(__name__)
 
@@ -98,7 +100,11 @@ def railfence():
 def railfence_encrypt():
 
     text = request.form['inputPlainText']
-    key = int(request.form['inputKeyPlain'])
+
+    try:
+        key = int(request.form['inputKeyPlain'])
+    except ValueError:
+        return "Key must be a number"
 
     RailFence = RailFenceCipher()
 
@@ -106,17 +112,92 @@ def railfence_encrypt():
 
     return f'text: {text}<br/>key: {key}<br/>encrypted text: {encrypted_text}'
 
-
 # Rail Fence Decrypt
 @app.route('/railfence_decrypt', methods=['POST'])
 def railfence_decrypt():
 
     text = request.form['inputCipherText']
-    key = int(request.form['inputKeyCipher'])
+
+    try:
+        key = int(request.form['inputKeyCipher'])
+    except ValueError:
+        return "Key must be a number"
 
     RailFence = RailFenceCipher()
 
     decrypted_text = RailFence.rail_fence_decrypt(text, key)
+
+    return f'text: {text}<br/>key: {key}<br/>decrypted text: {decrypted_text}'
+
+
+# =========================
+# PLAYFAIR CIPHER
+# =========================
+@app.route('/playfair')
+def playfair():
+    return render_template('playfair.html')
+
+
+# Playfair Encrypt
+@app.route('/playfair_encrypt', methods=['POST'])
+def playfair_encrypt():
+    text = request.form['inputPlainText'].upper()
+    key = request.form['inputKeyPlain'].upper()
+
+    PlayFair = PlayFairCipher()
+    matrix = PlayFair.create_playfair_matrix(key)
+    encrypted_text = PlayFair.playfair_encrypt(text, matrix)
+
+    return f'text: {text}<br/>key: {key}<br/>matrix: {matrix}<br/>encrypted text: {encrypted_text}'
+
+
+# Playfair Decrypt
+@app.route('/playfair_decrypt', methods=['POST'])
+def playfair_decrypt():
+    text = request.form['inputCipherText'].upper()
+    key = request.form['inputKeyCipher'].upper()
+
+    PlayFair = PlayFairCipher()
+    matrix = PlayFair.create_playfair_matrix(key)
+    decrypted_text = PlayFair.playfair_decrypt(text, matrix)
+
+    return f'text: {text}<br/>key: {key}<br/>matrix: {matrix}<br/>decrypted text: {decrypted_text}'
+
+
+# =========================
+# TRANSPOSITION CIPHER
+# =========================
+@app.route('/transposition')
+def transposition():
+    return render_template('transposition.html')
+
+
+# Transposition Encrypt
+@app.route('/transposition_encrypt', methods=['POST'])
+def transposition_encrypt():
+    text = request.form['inputPlainText']
+    try:
+        key = int(request.form['inputKeyPlain'])
+    except ValueError:
+        return "Key must be a number"
+
+    Transposition = TranspositionCipher()
+    encrypted_text = Transposition.encrypt(text, key)
+
+    return f'text: {text}<br/>key: {key}<br/>encrypted text: {encrypted_text}'
+
+
+# Transposition Decrypt
+@app.route('/transposition_decrypt', methods=['POST'])
+def transposition_decrypt():
+    text = request.form['inputCipherText']
+    try:
+        key = int(request.form['inputKeyCipher'])
+    except ValueError:
+        return "Key must be a number"
+
+    Transposition = TranspositionCipher()
+    decrypted_text = Transposition.decrypt(text, key)
 
     return f'text: {text}<br/>key: {key}<br/>decrypted text: {decrypted_text}'
 
