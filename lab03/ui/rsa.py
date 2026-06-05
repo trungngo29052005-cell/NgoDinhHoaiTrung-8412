@@ -9,6 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+import requests
 import os
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] ="../platforms"
 
@@ -44,12 +46,14 @@ class Ui_MainWindow(object):
         self.textEdit_2 = QtWidgets.QTextEdit(self.centralwidget)
         self.textEdit_2.setGeometry(QtCore.QRect(160, 260, 221, 71))
         self.textEdit_2.setObjectName("textEdit_2")
+        self.textEdit_2.setReadOnly(True)
         self.textEdit_3 = QtWidgets.QTextEdit(self.centralwidget)
         self.textEdit_3.setGeometry(QtCore.QRect(520, 150, 221, 71))
         self.textEdit_3.setObjectName("textEdit_3")
         self.textEdit_4 = QtWidgets.QTextEdit(self.centralwidget)
         self.textEdit_4.setGeometry(QtCore.QRect(520, 260, 221, 71))
         self.textEdit_4.setObjectName("textEdit_4")
+        self.textEdit_4.setReadOnly(True)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(170, 390, 75, 23))
         self.pushButton.setObjectName("pushButton")
@@ -62,6 +66,10 @@ class Ui_MainWindow(object):
         self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_4.setGeometry(QtCore.QRect(640, 380, 75, 23))
         self.pushButton_4.setObjectName("pushButton_4")
+        self.pushButton_5 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_5.setGeometry(QtCore.QRect(350, 440, 100, 30))
+        self.pushButton_5.setObjectName("pushButton_5")
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
@@ -74,9 +82,100 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        # Kết nối các nút bấm với logic xử lý API
+        self.pushButton.clicked.connect(self.encrypt_logic)
+        self.pushButton_2.clicked.connect(self.decrypt_logic)
+        self.pushButton_3.clicked.connect(self.sign_logic)
+        self.pushButton_4.clicked.connect(self.verify_logic)
+        self.pushButton_5.clicked.connect(self.gen_keys_logic)
+
+    def gen_keys_logic(self):
+        url = "http://127.0.0.1:5000/api/rsa/generate_keys"
+        try:
+            response = requests.post(url)
+            if response.status_code == 200:
+                QMessageBox.information(None, "Thông báo", "Tạo cặp khóa RSA thành công!")
+            else:
+                QMessageBox.warning(None, "Lỗi", "Không thể tạo khóa.")
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", f"Hãy chắc chắn rằng api.py đang chạy!\n{e}")
+
+    def encrypt_logic(self):
+        url = "http://127.0.0.1:5000/api/rsa/encrypt"
+        payload = {"message": self.textEdit.toPlainText(), "key_type": "public"}
+        if not payload["message"]:
+            QMessageBox.warning(None, "Lỗi", "Vui lòng nhập Plain Text!")
+            return
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                self.textEdit_2.setText(response.json().get("encrypted_message", ""))
+                QMessageBox.information(None, "Thông báo", "Mã hóa thành công!")
+            else:
+                err = response.json().get('error', 'Mã hóa thất bại.')
+                QMessageBox.warning(None, "Lỗi", err)
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", str(e))
+
+    def decrypt_logic(self):
+        url = "http://127.0.0.1:5000/api/rsa/decrypt"
+        payload = {"ciphertext": self.textEdit_2.toPlainText(), "key_type": "private"}
+        if not payload["ciphertext"]:
+            QMessageBox.warning(None, "Lỗi", "Vui lòng nhập Cipher Text!")
+            return
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                self.textEdit.setText(response.json().get("decrypted_message", ""))
+                QMessageBox.information(None, "Thông báo", "Giải mã thành công!")
+            else:
+                err = response.json().get('error', 'Giải mã thất bại.')
+                QMessageBox.warning(None, "Lỗi", err)
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", str(e))
+
+    def sign_logic(self):
+        url = "http://127.0.0.1:5000/api/rsa/sign"
+        payload = {"message": self.textEdit_3.toPlainText()}
+        if not payload["message"]:
+            QMessageBox.warning(None, "Lỗi", "Vui lòng nhập Information để ký!")
+            return
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                self.textEdit_4.setText(response.json().get("signature", ""))
+                QMessageBox.information(None, "Thông báo", "Ký số thành công!")
+            else:
+                err = response.json().get('error', 'Ký số thất bại.')
+                QMessageBox.warning(None, "Lỗi", err)
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", str(e))
+
+    def verify_logic(self):
+        url = "http://127.0.0.1:5000/api/rsa/verify"
+        payload = {
+            "message": self.textEdit_3.toPlainText(),
+            "signature": self.textEdit_4.toPlainText()
+        }
+        if not payload["message"] or not payload["signature"]:
+            QMessageBox.warning(None, "Lỗi", "Vui lòng nhập đủ Information và Signature!")
+            return
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                if response.json().get("is_verified"):
+                    QMessageBox.information(None, "Thông báo", "Chữ ký HỢP LỆ!")
+                else:
+                    QMessageBox.warning(None, "Thông báo", "Chữ ký KHÔNG hợp lệ!")
+            else:
+                err = response.json().get('error', 'Xác thực thất bại.')
+                QMessageBox.warning(None, "Lỗi", err)
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", str(e))
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "RSA Cipher GUI"))
         self.label.setText(_translate("MainWindow", "RSA CIPHER"))
         self.label_2.setText(_translate("MainWindow", "Plain Text"))
         self.label_3.setText(_translate("MainWindow", "CipherText"))
@@ -85,7 +184,8 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Encrypt"))
         self.pushButton_2.setText(_translate("MainWindow", "Decrypt"))
         self.pushButton_3.setText(_translate("MainWindow", "Sign"))
-        self.pushButton_4.setText(_translate("MainWindow", "Vetify"))
+        self.pushButton_4.setText(_translate("MainWindow", "Verify"))
+        self.pushButton_5.setText(_translate("MainWindow", "Generate Keys"))
 
 
 if __name__ == "__main__":

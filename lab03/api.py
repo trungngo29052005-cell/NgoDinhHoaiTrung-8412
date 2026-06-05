@@ -6,7 +6,7 @@ app = Flask(__name__)
 # RSA CIPHER ALGORITHM
 rsa_cipher = RSACipher()
 
-@app.route('/api/rsa/generate_keys', methods=['GET'])
+@app.route('/api/rsa/generate_keys', methods=['POST'])
 def rsa_generate_keys():
     rsa_cipher.generate_keys()
     return jsonify({'message': 'Keys generated successfully'})
@@ -16,7 +16,11 @@ def rsa_encrypt():
     data = request.json
     message = data['message']
     key_type = data['key_type']
-    private_key, public_key = rsa_cipher.load_keys()
+    
+    try:
+        private_key, public_key = rsa_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
     
     if key_type == 'public':
         key = public_key
@@ -34,7 +38,11 @@ def rsa_decrypt():
     data = request.json
     ciphertext_hex = data['ciphertext']
     key_type = data['key_type']
-    private_key, public_key = rsa_cipher.load_keys()
+    
+    try:
+        private_key, public_key = rsa_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
     
     if key_type == 'public':
         key = public_key
@@ -51,7 +59,11 @@ def rsa_decrypt():
 def rsa_sign_message():
     data = request.json
     message = data['message']
-    private_key, _ = rsa_cipher.load_keys()
+    
+    try:
+        private_key, _ = rsa_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
     
     signature = rsa_cipher.sign(message, private_key)
     signature_hex = signature.hex()
@@ -62,7 +74,11 @@ def rsa_verify_signature():
     data = request.json
     message = data['message']
     signature_hex = data['signature']
-    public_key, _ = rsa_cipher.load_keys()
+    
+    try:
+        public_key, _ = rsa_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
     
     signature = bytes.fromhex(signature_hex)
     is_verified = rsa_cipher.verify(message, signature, public_key)
