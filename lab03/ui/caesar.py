@@ -9,6 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+import requests
 import os
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = "../platforms"
 
@@ -51,14 +53,16 @@ class Ui_call_api_decrypt_2(object):
         self.textEdit.setMinimumHeight(80)
         form_layout.addRow("Plain Text:", self.textEdit)
 
-        # Key (single line)
-        self.textEdit_2 = QtWidgets.QLineEdit()
+        # Key
+        self.textEdit_2 = QtWidgets.QTextEdit()
         self.textEdit_2.setObjectName("textEdit_2")
         self.textEdit_2.setPlaceholderText("Shift key (e.g. 3)")
+        self.textEdit_2.setMaximumHeight(35)
         form_layout.addRow("Key:", self.textEdit_2)
 
         # Cipher text
         self.textEdit_3 = QtWidgets.QTextEdit()
+        self.textEdit_3.setReadOnly(True)  # Đảm bảo ô này chỉ để xuất kết quả
         self.textEdit_3.setObjectName("textEdit_3")
         self.textEdit_3.setPlaceholderText("Cipher text will appear here...")
         self.textEdit_3.setMinimumHeight(80)
@@ -92,6 +96,52 @@ class Ui_call_api_decrypt_2(object):
 
         self.retranslateUi(call_api_decrypt_2)
         QtCore.QMetaObject.connectSlotsByName(call_api_decrypt_2)
+
+        # Kết nối các nút bấm với logic xử lý API trực tiếp trong file này
+        self.call_api_encrypt.clicked.connect(self.encrypt_logic)
+        self.call_api_decrypt.clicked.connect(self.decrypt_logic)
+
+    def encrypt_logic(self):
+        url = "http://127.0.0.1:5000/api/caesar/encrypt"
+        payload = {
+            "plain_text": self.textEdit.toPlainText(),
+            "key": self.textEdit_2.toPlainText().strip()
+        }
+        try:
+            # Gọi API tới server Flask
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                data = response.json()
+                # Lấy kết quả từ API (tương thích cả Lab 02 và Lab 03)
+                result = data.get("encrypted_message") or data.get("encrypted_text", "")
+                # Xuất kết quả ra ô Cipher Text
+                self.textEdit_3.setText(result)
+                QMessageBox.information(None, "Thông báo", "Mã hóa thành công!")
+            else:
+                QMessageBox.warning(None, "Lỗi", "Không thể mã hóa. Kiểm tra lại Key (phải là số).")
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", f"Hãy chắc chắn rằng api.py đang chạy!\n{e}")
+
+    def decrypt_logic(self):
+        url = "http://127.0.0.1:5000/api/caesar/decrypt"
+        # Khi giải mã, lấy dữ liệu từ ô Cipher Text (đang ReadOnly) để gửi đi
+        payload = {
+            "cipher_text": self.textEdit_3.toPlainText(),
+            "key": self.textEdit_2.toPlainText().strip()
+        }
+        try:
+            response = requests.post(url, json=payload)
+            if response.status_code == 200:
+                data = response.json()
+                # Lấy kết quả giải mã
+                result = data.get("decrypted_message") or data.get("decrypted_text", "")
+                # Trả kết quả về ô Plain Text
+                self.textEdit.setText(result)
+                QMessageBox.information(None, "Thông báo", "Giải mã thành công!")
+            else:
+                QMessageBox.warning(None, "Lỗi", "Không thể giải mã. Kiểm tra lại dữ liệu và Key.")
+        except Exception as e:
+            QMessageBox.critical(None, "Lỗi kết nối", f"Hãy chắc chắn rằng api.py đang chạy!\n{e}")
 
     def retranslateUi(self, call_api_decrypt_2):
         _translate = QtCore.QCoreApplication.translate
