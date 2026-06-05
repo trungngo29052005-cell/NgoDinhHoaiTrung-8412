@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from ui.ecc import Ui_MainWindow
+from ecc import Ui_MainWindow
 import requests
 
 class MyApp(QMainWindow):
@@ -24,9 +24,9 @@ class MyApp(QMainWindow):
                 msg.setText(data["message"])
                 msg.exec_()
             else:
-                print("Error while calling API")
+                QMessageBox.critical(self, "Error", "Failed to generate keys.")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"API Error: {e}")
 
     def call_api_sign(self):
         url = "http://127.0.0.1:5000/api/ecc/sign"
@@ -44,9 +44,9 @@ class MyApp(QMainWindow):
                 msg.setText("Signed Successfully")
                 msg.exec_()
             else:
-                print("Error while calling API")
+                QMessageBox.critical(self, "Error", "Signing failed.")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"API Error: {e}")
 
     def call_api_verify(self):
         url = "http://127.0.0.1:5000/api/ecc/verify"
@@ -69,9 +69,9 @@ class MyApp(QMainWindow):
                     msg.setText("Verified Fail")
                     msg.exec_()
             else:
-                print("Error while calling API")
+                QMessageBox.critical(self, "Error", "Verification process failed.")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"API Error: {e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

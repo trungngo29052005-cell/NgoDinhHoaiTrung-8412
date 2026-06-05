@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from ui.rsa import Ui_MainWindow
+from rsa_ui import Ui_MainWindow
 import requests
 
 class MyApp(QMainWindow):
@@ -14,11 +14,15 @@ class MyApp(QMainWindow):
         self.ui.pushButton_2.clicked.connect(self.call_api_decrypt)
         self.ui.pushButton_3.clicked.connect(self.call_api_sign)
         self.ui.pushButton_4.clicked.connect(self.call_api_verify)
+        
+        # Thông báo để người dùng biết server cần được bật
+        print("RSA Controller is running. Connect to API on port 5000.")
 
     def call_api_gen_keys(self):
         url = "http://127.0.0.1:5000/api/rsa/generate_keys"
         try:
-            response = requests.get(url)
+            # Sử dụng POST cho đồng bộ và an toàn hơn khi tạo dữ liệu mới
+            response = requests.post(url)
             if response.status_code == 200:
                 data = response.json()
                 msg = QMessageBox()
@@ -26,9 +30,10 @@ class MyApp(QMainWindow):
                 msg.setText(data["message"])
                 msg.exec_()
             else:
-                print("Error while calling API")
-        except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+                error_info = response.json().get('error', 'Unknown error')
+                QMessageBox.critical(self, "Error", f"Failed to generate keys: {error_info}")
+        except Exception as e:
+            QMessageBox.critical(self, "Connection Error", f"Cannot connect to API server: {e}")
 
     def call_api_encrypt(self):
         url = "http://127.0.0.1:5000/api/rsa/encrypt"
@@ -36,6 +41,10 @@ class MyApp(QMainWindow):
             "message": self.ui.textEdit.toPlainText(),
             "key_type": "public"
         }
+        if not payload["message"]:
+            QMessageBox.warning(self, "Input Error", "Please enter Plain Text!")
+            return
+            
         try:
             response = requests.post(url, json=payload)
             if response.status_code == 200:
@@ -46,9 +55,9 @@ class MyApp(QMainWindow):
                 msg.setText("Encrypted Successfully")
                 msg.exec_()
             else:
-                print(f"Error while calling API. Status code: {response.status_code}")
+                QMessageBox.critical(self, "API Error", f"Encryption failed. Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"Is api.py running?\n{e}")
 
     def call_api_decrypt(self):
         url = "http://127.0.0.1:5000/api/rsa/decrypt"
@@ -66,9 +75,9 @@ class MyApp(QMainWindow):
                 msg.setText("Decrypted Successfully")
                 msg.exec_()
             else:
-                print(f"Error while calling API. Status code: {response.status_code}")
+                QMessageBox.critical(self, "API Error", f"Decryption failed. Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"Is api.py running?\n{e}")
 
     def call_api_sign(self):
         url = "http://127.0.0.1:5000/api/rsa/sign"
@@ -85,9 +94,9 @@ class MyApp(QMainWindow):
                 msg.setText("Signed Successfully")
                 msg.exec_()
             else:
-                print(f"Error while calling API. Status code: {response.status_code}")
+                QMessageBox.critical(self, "Error", f"Signing failed. Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"API Error: {e}")
 
     def call_api_verify(self):
         url = "http://127.0.0.1:5000/api/rsa/verify"
@@ -107,9 +116,9 @@ class MyApp(QMainWindow):
                     msg.setText("Verification Failed")
                 msg.exec_()
             else:
-                print(f"Error while calling API. Status code: {response.status_code}")
+                QMessageBox.critical(self, "Error", f"Verification failed. Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            QMessageBox.critical(self, "Connection Error", f"API Error: {e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
