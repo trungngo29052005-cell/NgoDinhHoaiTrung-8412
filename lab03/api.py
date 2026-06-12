@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
 from cipher.rsa import RSACipher
+from cipher.ecc import ECCCipher  # Thêm vào đầu file theo ảnh hướng dẫn
 
 app = Flask(__name__)
 
+# ==============================================================================
 # RSA CIPHER ALGORITHM
+# ==============================================================================
 rsa_cipher = RSACipher()
 
-@app.route('/api/rsa/generate_keys', methods=['POST'])
+@app.route('/api/rsa/generate_keys', methods=['GET'])
 def rsa_generate_keys():
     rsa_cipher.generate_keys()
     return jsonify({'message': 'Keys generated successfully'})
@@ -52,8 +55,9 @@ def rsa_decrypt():
         return jsonify({'error': 'Invalid key type'})
         
     ciphertext = bytes.fromhex(ciphertext_hex)
-    encrypted_message = rsa_cipher.decrypt(ciphertext, key)
-    return jsonify({'decrypted_message': encrypted_message})
+    # Đã sửa tên biến từ encrypted_message thành decrypted_message để đồng bộ với lệnh return
+    decrypted_message = rsa_cipher.decrypt(ciphertext, key)
+    return jsonify({'decrypted_message': decrypted_message})
 
 @app.route('/api/rsa/sign', methods=['POST'])
 def rsa_sign_message():
@@ -84,6 +88,49 @@ def rsa_verify_signature():
     is_verified = rsa_cipher.verify(message, signature, public_key)
     return jsonify({'is_verified': is_verified})
 
-# main function
+
+# ==============================================================================
+# ECC CIPHER ALGORITHM (Thêm đoạn này trước hàm main)
+# ==============================================================================
+ecc_cipher = ECCCipher()
+
+@app.route('/api/ecc/generate_keys', methods=['GET'])
+def ecc_generate_keys():
+    ecc_cipher.generate_keys()
+    return jsonify({'message': 'Keys generated successfully'})
+
+@app.route('/api/ecc/sign', methods=['POST'])
+def ecc_sign_message():
+    data = request.json
+    message = data['message']
+    
+    try:
+        private_key, _ = ecc_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
+        
+    signature = ecc_cipher.sign(message, private_key)
+    signature_hex = signature.hex()
+    return jsonify({'signature': signature_hex})
+
+@app.route('/api/ecc/verify', methods=['POST'])
+def ecc_verify_signature():
+    data = request.json
+    message = data['message']
+    signature_hex = data['signature']
+    
+    try:
+        public_key, _ = ecc_cipher.load_keys()
+    except FileNotFoundError:
+        return jsonify({'error': 'Keys not found. Please generate keys first.'}), 404
+        
+    signature = bytes.fromhex(signature_hex)
+    is_verified = ecc_cipher.verify(message, signature, public_key)
+    return jsonify({'is_verified': is_verified})
+
+
+# ==============================================================================
+# MAIN FUNCTION
+# ==============================================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
